@@ -40,29 +40,7 @@ bool platform::camera::isRecording () {
     ) >= REC_TRESHOLD;
 }
 
-void toggleRecording() {
-  uint8_t pkt[5];
-  pkt[0] = RUNCAM_HEADER;
-  pkt[1] = RUNCAM_CMD_CAM_CTRL;
-  pkt[2] = RUNCAM_TOGGLE;
-  pkt[3] = runcam_crc(pkt[0], pkt[1], pkt[2]);
-  pkt[4] = RUNCAM_TAIL;
 
-  platform::camera::sendUart(pkt, 5);
-}
-
-uint8_t runcam_crc(uint8_t header, uint8_t cmd, uint8_t toggle) {
-  uint8_t buffer[5];
-
-  buffer[0] = RUNCAM_HEADER;
-  buffer[1] = RUNCAM_CMD_CAM_CTRL;
-  buffer[2] = RUNCAM_TOGGLE;
-  buffer[3] = RUNCAM_TAIL;
-
-  uint8_t crc = crc_high_first(buffer, 4);
-
-  return crc;
-}
 uint8_t crc_high_first(uint8_t* ptr, uint8_t len) {
   uint8_t i;
   uint8_t crc = 0x00;
@@ -77,6 +55,28 @@ uint8_t crc_high_first(uint8_t* ptr, uint8_t len) {
   }
   return (crc);
 }
+uint8_t runcam_crc(uint8_t header, uint8_t cmd, uint8_t toggle) {
+  uint8_t buffer[5];
+
+  buffer[0] = RUNCAM_HEADER;
+  buffer[1] = RUNCAM_CMD_CAM_CTRL;
+  buffer[2] = RUNCAM_TOGGLE;
+  buffer[3] = RUNCAM_TAIL;
+
+  uint8_t crc = crc_high_first(buffer, 4);
+
+  return crc;
+}
+void toggleRecording() {
+  uint8_t pkt[5];
+  pkt[0] = RUNCAM_HEADER;
+  pkt[1] = RUNCAM_CMD_CAM_CTRL;
+  pkt[2] = RUNCAM_TOGGLE;
+  pkt[3] = runcam_crc(pkt[0], pkt[1], pkt[2]);
+  pkt[4] = RUNCAM_TAIL;
+
+  platform::camera::sendUart(pkt, 5);
+}
 
 void platform::camera::startRecording (bool isFirst) {
     toggleRecording();
@@ -86,7 +86,7 @@ void platform::camera::stopRecording (bool isFirst) {
 }
 
 void platform::camera::initUart () {
-    if (uart_is_on) {
+    if (!uart_is_on) {
         Serial1.begin(115200, SERIAL_8N1, UART_RX, UART_TX);
         uart_is_on = true;
     }

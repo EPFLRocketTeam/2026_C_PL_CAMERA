@@ -50,7 +50,7 @@ void platform::can::try_receive () {
             fsm.onAvionicsStart();
             continue ;
         }
-        if (msg_type == static_cast<uint16_t>(MessageType::STOP_REC) && validation == VALID_START_REC) {
+        if (msg_type == static_cast<uint16_t>(MessageType::STOP_REC) && validation == VALID_STOP_REC) {
             fsm.onAvionicsStop();
             continue ;
         }

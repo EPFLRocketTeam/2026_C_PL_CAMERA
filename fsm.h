@@ -48,6 +48,10 @@ private:
 
     State currentState;
     
+    // Recording
+    uint32_t lastCheck = 0;
+    uint8_t  missCount = 0;
+    
     State fromInit ();
     State fromTryPowerOn ();
     State fromWaitForOn ();

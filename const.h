@@ -53,10 +53,13 @@ static constexpr uint32_t TimerLEDValueNextMs     = 250;
 static constexpr uint32_t TimerLEDValueDurationMs = 750;
 static constexpr uint32_t TimerLEDValueOnMs       = 500;
 static constexpr uint32_t TimerLEDValueOffMs      = 200;
-static constexpr uint32_t TimerLEDValueOffMs      = 200;
 static constexpr uint32_t TimerLEDEndDurationMs   = 500;
 
 static constexpr uint32_t TimerHealthPacketMs = 1000;
+
+inline constexpr uint32_t TimerCheckRecordingMs = 5'000;
+inline constexpr uint8_t  MaxRecordingMisses    = 2;
+inline constexpr uint32_t TimerAbortCooldownMs  = 5'000;
 
 enum class MessageType : uint16_t {
     START_REC = 0b111000000,

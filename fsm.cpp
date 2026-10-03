@@ -4,7 +4,7 @@
 #include "status_led.h"
 
 State FiniteStateMachine::fromInit () {
-    return State::POWER_ON;
+    return State::TRY_POWER_ON;
 }
 State FiniteStateMachine::fromTryPowerOn () {
     if (avState == AV_ABORT) return State::ABORT_ON_POWER_ON;
@@ -48,6 +48,13 @@ State FiniteStateMachine::fromRecording () {
     if (avState == AV_ABORT) return State::ABORT_ON_START;
     if (platform::isManualMode()) return State::RECORDING_MANUAL;
     if (avState == AV_STOPPED) return State::TRY_STOP;
+
+    uint32_t now = platform::currentTime();
+    if (now - lastCheck >= TimerCheckRecordingMs) {
+        lastCheck = now;
+        missCount = platform::camera::isRecording() ? 0 : missCount + 1;
+        if (missCount >= MaxRecordingMisses) return State::TRY_START;
+    }
     return currentState;
 }
 State FiniteStateMachine::fromRecordingManual () {
@@ -71,14 +78,20 @@ State FiniteStateMachine::fromEnded () {
     return currentState;
 }
 State FiniteStateMachine::fromAbortOnPowerOn () {
+    if (avState == AV_ABORT) return currentState;
+    if (timeSinceLastChangeMs() >= TimerAbortCooldownMs) return State::INIT;
     if (avState == AV_INIT) return State::INIT;
     return currentState;
 }
 State FiniteStateMachine::fromAbortOnStart () {
+    if (avState == AV_ABORT) return currentState;
+    if (timeSinceLastChangeMs() >= TimerAbortCooldownMs) return State::INIT;
     if (avState == AV_INIT) return State::INIT;
     return currentState;
 }
 State FiniteStateMachine::fromAbortOnStop () {
+    if (avState == AV_ABORT) return currentState;
+    if (timeSinceLastChangeMs() >= TimerAbortCooldownMs) return State::INIT;
     if (avState == AV_INIT) return State::INIT;
     return currentState;
 }
@@ -190,6 +203,7 @@ void FiniteStateMachine::applyActions () {
             break ;
         case ENDED:
             set_status({ .nb_blink = 2, .value = 6, .value_length = 3 });
+            break ;
         case ABORT_ON_POWER_ON:
         case ABORT_ON_START:
         case ABORT_ON_STOP:
