@@ -40,6 +40,6 @@ float platform::measureCurrent(uint8_t rep) {
     }
     return total / rep;
 }
-void setLED (bool enabled) {
+void platform::setLED (bool enabled) {
     digitalWrite(LED, enabled ? HIGH : LOW);
 }

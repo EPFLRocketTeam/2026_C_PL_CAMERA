@@ -60,7 +60,7 @@ void led_tick () {
             break ;
         case LEDStateMachine::LED_VALUE:
             maxDeltaTime = TimerLEDValueDurationMs;
-            nextState = offset == gLEDStatusDisplayed.value_length ? LEDStateMachine::LED_END : LEDStateMachine::LED_VALUE_NEXT;
+            nextState = offset >= gLEDStatusDisplayed.value_length ? LEDStateMachine::LED_END : LEDStateMachine::LED_VALUE_NEXT;
             break ;
         case LEDStateMachine::LED_END:
             maxDeltaTime = TimerLEDEndDurationMs;

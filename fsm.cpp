@@ -80,18 +80,14 @@ State FiniteStateMachine::fromEnded () {
 State FiniteStateMachine::fromAbortOnPowerOn () {
     if (avState == AV_ABORT) return currentState;
     if (timeSinceLastChangeMs() >= TimerAbortCooldownMs) return State::INIT;
-    if (avState == AV_INIT) return State::INIT;
     return currentState;
 }
 State FiniteStateMachine::fromAbortOnStart () {
     if (avState == AV_ABORT) return currentState;
     if (timeSinceLastChangeMs() >= TimerAbortCooldownMs) return State::INIT;
-    if (avState == AV_INIT) return State::INIT;
     return currentState;
 }
 State FiniteStateMachine::fromAbortOnStop () {
-    if (avState == AV_ABORT) return currentState;
-    if (timeSinceLastChangeMs() >= TimerAbortCooldownMs) return State::INIT;
     if (avState == AV_INIT) return State::INIT;
     return currentState;
 }
@@ -191,6 +187,8 @@ void FiniteStateMachine::applyActions () {
         case RECORDING:
             set_status({ .nb_blink = 2, .value = 4, .value_length = 3 });
             tryNumber = 0;
+            lastCheck = 0;
+            missCount = 0;
             break ;
         case RECORDING_MANUAL:
             break ;
