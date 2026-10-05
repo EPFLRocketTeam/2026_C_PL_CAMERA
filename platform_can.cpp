@@ -55,6 +55,16 @@ void platform::can::try_receive () {
             continue ;
         }
 
+        if (msg_type == static_cast<uint16_t>(MessageType::ABORT) && validation == VALID_ABORT) {
+            fsm.onAvionicsAbort();
+            continue ;
+        }
+
+        if (msg_type == static_cast<uint16_t>(MessageType::RECOVER) && validation == VALID_RECOVER) {
+            fsm.onAvionicsRecover();
+            continue ;
+        }
+
         // Unknown message
         return ;
     }

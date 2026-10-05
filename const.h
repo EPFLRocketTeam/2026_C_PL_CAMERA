@@ -9,6 +9,8 @@ static constexpr uint32_t NUMBER_REPETITIONS = 10;
 
 static constexpr uint16_t VALID_START_REC = 0x42A5;
 static constexpr uint16_t VALID_STOP_REC  = 0xA542;
+static constexpr uint16_t VALID_ABORT     = 0xDEAD;
+static constexpr uint16_t VALID_RECOVER   = 0xCAFE;
 
 static constexpr gpio_num_t LED      = GPIO_NUM_2;
 static constexpr gpio_num_t PWR_CTRL = GPIO_NUM_3;
@@ -64,6 +66,8 @@ inline constexpr uint32_t TimerAbortCooldownMs  = 5'000;
 enum class MessageType : uint16_t {
     START_REC = 0b111000000,
     STOP_REC  = 0b000111000,
+    ABORT     = 0b101010000,
+    RECOVER   = 0b010101111,
     HEALTH    = 0b000000111,
     NONE      = 0b000000000
 };
