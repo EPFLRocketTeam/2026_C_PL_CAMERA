@@ -201,6 +201,7 @@ void FiniteStateMachine::applyActions () {
             break ;
         case ENDED:
             set_status({ .nb_blink = 2, .value = 6, .value_length = 3 });
+            platform::camera::powerOff ();
             break ;
         case ABORT_ON_POWER_ON:
         case ABORT_ON_START:

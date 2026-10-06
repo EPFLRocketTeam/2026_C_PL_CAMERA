@@ -35,15 +35,15 @@ inline constexpr uint32_t MaxNumberRetries = 5;
 inline constexpr uint32_t TimerRetryPowerOnMs = 2000;
 inline constexpr uint32_t TimerPostUartInitMs = 2000;
 
-inline constexpr uint32_t TimerManualStartRecordingMs = 10'000;
+inline constexpr uint32_t TimerManualStartRecordingMs = 30'000;
 inline constexpr uint32_t TimerRetryStartRecordingMs  = 3'000;
 
-inline constexpr uint32_t TimerManualStopRecordingMs = 10'000;
+inline constexpr uint32_t TimerManualStopRecordingMs = 30'000;
 inline constexpr uint32_t TimerRetryStopRecordingMs  = 3'000;
 
-#define CAM_AERO_TOP 0b01 // blue spacers
-#define CAM_SEPMECH  0b10 // yellow spacers
-#define CAM_AERO_BOT 0b00 // red spacers
+#define CAM_AERO_TOP 0b01 // red spacers
+#define CAM_SEPMECH  0b10 // blue spacers
+#define CAM_AERO_BOT 0b00 // yellow spacers
 
 // Update on flash
 static constexpr uint8_t WHO_AM_I = CAM_SEPMECH;
@@ -52,10 +52,10 @@ static constexpr uint32_t TimerLEDInitMs          = 1000;
 static constexpr uint32_t TimerLEDBlinkOnMs       = 100;
 static constexpr uint32_t TimerLEDBlinkOffMs      = 100;
 static constexpr uint32_t TimerLEDValueNextMs     = 250;
-static constexpr uint32_t TimerLEDValueDurationMs = 750;
-static constexpr uint32_t TimerLEDValueOnMs       = 500;
-static constexpr uint32_t TimerLEDValueOffMs      = 200;
-static constexpr uint32_t TimerLEDEndDurationMs   = 500;
+static constexpr uint32_t TimerLEDValueDurationMs = 1750;
+static constexpr uint32_t TimerLEDValueOnMs       = 1500;
+static constexpr uint32_t TimerLEDValueOffMs      = 250;
+static constexpr uint32_t TimerLEDEndDurationMs   = 3000;
 
 static constexpr uint32_t TimerHealthPacketMs = 1000;
 

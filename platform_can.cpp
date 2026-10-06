@@ -7,12 +7,54 @@
 
 void platform::can::init_can () {
     if (isManualMode()) {
-        return ;
+        return;
     }
 
-    twai_general_config_t g_config = TWAI_GENERAL_CONFIG_DEFAULT(CAN_TX, CAN_RX, TWAI_MODE_NORMAL);
-    twai_timing_config_t t_config = TWAI_TIMING_CONFIG_500KBITS();  // 500 kbps
-    twai_filter_config_t f_config = TWAI_FILTER_CONFIG_ACCEPT_ALL();
+    twai_general_config_t g_config =
+        TWAI_GENERAL_CONFIG_DEFAULT(
+            CAN_TX,
+            CAN_RX,
+            TWAI_MODE_NORMAL
+        );
+
+    // Exact match for STM32 FDCAN:
+    //
+    // STM32:
+    //   Kernel clock = 16 MHz
+    //   Prescaler    = 2
+    //   TQ clock     = 8 MHz
+    //   TSEG1        = 12
+    //   TSEG2        = 3
+    //   SJW          = 3
+    //
+    // ESP32-C3:
+    //   TWAI clock   = 80 MHz APB
+    //   TQ clock     = 8 MHz
+    //   Effective BRP = 10
+    //
+    // Bitrate:
+    //   8 MHz / (1 + 12 + 3)
+    //   = 8 MHz / 16
+    //   = 500 kbit/s
+    //
+    // Sample point:
+    //   (1 + 12) / 16
+    //   = 81.25 %
+
+    twai_timing_config_t t_config = {
+        .clk_src = TWAI_CLK_SRC_DEFAULT,
+        .quanta_resolution_hz = 8000000,
+        .brp = 0,
+        .prop_seg = 0,
+        .tseg_1 = 12,
+        .tseg_2 = 3,
+        .sjw = 3,
+        .ssp_offset = 0,
+        .triple_sampling = false
+    };
+
+    twai_filter_config_t f_config =
+        TWAI_FILTER_CONFIG_ACCEPT_ALL();
 
     if (twai_driver_install(&g_config, &t_config, &f_config) != ESP_OK) {
         while (1) {
