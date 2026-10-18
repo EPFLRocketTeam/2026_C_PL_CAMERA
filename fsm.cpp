@@ -4,7 +4,10 @@
 #include "status_led.h"
 
 State FiniteStateMachine::fromInit () {
-    return State::TRY_POWER_ON;
+    // Stay unpowered until a START_REC command is received.
+    if (avState == AV_ABORT) return State::ABORT_ON_POWER_ON;
+    if (avState == AV_RECORD) return State::TRY_START;
+    return currentState;
 }
 State FiniteStateMachine::fromTryPowerOn () {
     if (avState == AV_ABORT) return State::ABORT_ON_POWER_ON;
@@ -24,7 +27,6 @@ State FiniteStateMachine::fromUartInit () {
 }
 State FiniteStateMachine::fromPowerOn () {
     if (avState == AV_ABORT) return State::ABORT_ON_POWER_ON;
-    if (platform::isManualMode()) return State::POWER_ON_MANUAL;
     if (avState == AV_RECORD) return State::TRY_START;
     return currentState;
 }
@@ -35,26 +37,23 @@ State FiniteStateMachine::fromPowerOnManual () {
 }
 State FiniteStateMachine::fromTryStart () {
     if (avState == AV_ABORT) return State::ABORT_ON_START;
+    if (avState == AV_STOPPED) return State::TRY_STOP;
     if (tryNumber > MaxNumberRetries) return State::ABORT_ON_START;
     return State::WAIT_FOR_START;
 }
 State FiniteStateMachine::fromWaitForStart () {
     if (avState == AV_ABORT) return State::ABORT_ON_START;
-    if (platform::camera::isRecording()) return State::RECORDING;
+    if (avState == AV_STOPPED) return State::TRY_STOP;
+    // Power detection replaces UART/current-delta recording verification.
+    if (platform::camera::isPowerOn()) return State::RECORDING;
     if (timeSinceLastChangeMs() >= TimerRetryStartRecordingMs) return State::TRY_START;
     return currentState;
 }
 State FiniteStateMachine::fromRecording () {
     if (avState == AV_ABORT) return State::ABORT_ON_START;
-    if (platform::isManualMode()) return State::RECORDING_MANUAL;
     if (avState == AV_STOPPED) return State::TRY_STOP;
 
-    uint32_t now = platform::currentTime();
-    if (now - lastCheck >= TimerCheckRecordingMs) {
-        lastCheck = now;
-        missCount = platform::camera::isRecording() ? 0 : missCount + 1;
-        if (missCount >= MaxRecordingMisses) return State::TRY_START;
-    }
+    // No automatic recording toggles or power cycles while recording.
     return currentState;
 }
 State FiniteStateMachine::fromRecordingManual () {
@@ -69,11 +68,13 @@ State FiniteStateMachine::fromTryStop () {
 }
 State FiniteStateMachine::fromWaitForStop () {
     if (avState == AV_ABORT) return State::ABORT_ON_STOP;
-    if (!platform::camera::isRecording()) return State::ENDED;
+    if (!platform::camera::isPowerOn()) return State::ENDED;
     if (timeSinceLastChangeMs() >= TimerRetryStopRecordingMs) return State::TRY_STOP;
     return currentState;
 }
 State FiniteStateMachine::fromEnded () {
+    if (avState == AV_ABORT) return State::ABORT_ON_STOP;
+    if (avState == AV_RECORD) return State::TRY_START;
     if (avState == AV_INIT) return State::INIT;
     return currentState;
 }
@@ -115,7 +116,7 @@ State FiniteStateMachine::fromCurrentState () {
     return INIT;
 }
 void FiniteStateMachine::onAvionicsStart () {
-    if (avState == AV_INIT) {
+    if (avState == AV_INIT || avState == AV_STOPPED) {
         avState = AV_RECORD;
     }
 }
@@ -155,6 +156,7 @@ uint32_t FiniteStateMachine::timeSinceLastChangeMs () {
 void FiniteStateMachine::applyActions () {
     switch (currentState) {
         case INIT:
+            platform::camera::powerOff();
             tryNumber = 0;
             set_status({ .nb_blink = 2, .value = 0, .value_length = 3 });
             break ;
@@ -168,7 +170,7 @@ void FiniteStateMachine::applyActions () {
         case WAIT_FOR_ON:
             break ;
         case UART_INIT:
-            platform::camera::initUart();
+            // UART state retained, but UART is not initialized.
             break ;
         case POWER_ON:
             set_status({ .nb_blink = 2, .value = 2, .value_length = 3 });
@@ -180,7 +182,8 @@ void FiniteStateMachine::applyActions () {
         case TRY_START:
             set_status({ .nb_blink = 2, .value = 3, .value_length = 3 });
             tryNumber ++;
-            platform::camera::startRecording (tryNumber == 1);
+            // Hold MOSFET HIGH. Retries must not power-cycle the camera.
+            platform::camera::powerOn(true);
             break ;
         case WAIT_FOR_START:
             break ;
@@ -195,11 +198,12 @@ void FiniteStateMachine::applyActions () {
         case TRY_STOP:
             set_status({ .nb_blink = 2, .value = 5, .value_length = 3 });
             tryNumber ++;
-            platform::camera::stopRecording (tryNumber == 1);
+            platform::camera::powerOff();
             break ;
         case WAIT_FOR_STOP:
             break ;
         case ENDED:
+            tryNumber = 0;
             set_status({ .nb_blink = 2, .value = 6, .value_length = 3 });
             platform::camera::powerOff ();
             break ;
